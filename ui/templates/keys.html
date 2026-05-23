@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}RSA Keys{% endblock %}
+
+{% block content %}
+<h2>RSA Keypair</h2>
+
+<p>Bits: <strong>{{ bits }}</strong> &middot; Generated at <code>{{ generated_at }}</code></p>
+
+<form method="post" action="{{ url_for('keys_generate') }}" class="key-form">
+    <label for="bits">Generate new keypair with size:</label>
+    <select id="bits" name="bits">
+        <option value="512">512 bits (fast, demo only)</option>
+        <option value="1024" selected>1024 bits (default)</option>
+        <option value="2048">2048 bits (slower, stronger)</option>
+    </select>
+    <button type="submit" class="button">Generate</button>
+</form>
+
+<h3>Public key (n, e)</h3>
+<div class="key-block">
+    <p>e = <code>{{ public_e }}</code></p>
+    <p>n = </p>
+    <pre>{{ public_n_hex }}</pre>
+</div>
+
+<h3>Private key (d, p, q)</h3>
+<details>
+    <summary>Show secret values</summary>
+    <div class="key-block">
+        <p>d = </p>
+        <pre>{{ private_d_hex }}</pre>
+        <p>p = </p>
+        <pre>{{ prime_p_hex }}</pre>
+        <p>q = </p>
+        <pre>{{ prime_q_hex }}</pre>
+    </div>
+</details>
+
+<p class="note">
+    In a real product, the private key would never be displayed in a
+    browser. We show it here for educational purposes only.
+</p>
+{% endblock %}

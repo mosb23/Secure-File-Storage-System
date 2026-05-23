@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Encryption Result{% endblock %}
+
+{% block content %}
+<h2>Encryption Successful</h2>
+<p>
+    Original file: <strong>{{ original_name }}</strong>
+    ({{ plaintext_size }} bytes &rarr; ciphertext {{ ciphertext_size }} bytes)
+</p>
+
+<a class="button big" href="{{ url_for('download', kind='encrypted', name=download_name) }}">
+    Download encrypted bundle (.enc.txt)
+</a>
+
+<h3>AES session key (hex)</h3>
+<pre>{{ aes_key_hex }}</pre>
+
+<h3>Initialization Vector (IV, hex)</h3>
+<pre>{{ iv_hex }}</pre>
+
+<h3>RSA-wrapped AES key (Base64)</h3>
+<pre>{{ encrypted_key_b64 }}</pre>
+
+<h3>Ciphertext preview (Base64, first 512 chars)</h3>
+<pre>{{ ciphertext_preview_b64 }}</pre>
+
+<p class="note">
+    Keep the <code>.enc.txt</code> file safe. To recover the original file
+    you will need the matching RSA private key. The current keypair lives
+    only in memory and will reset if the server restarts.
+</p>
+
+<p>
+    <a class="button" href="{{ url_for('encrypt_page') }}">Encrypt another file</a>
+    <a class="button secondary" href="{{ url_for('decrypt_page') }}">Decrypt a file</a>
+</p>
+{% endblock %}

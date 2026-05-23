@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{% block title %}RSA &amp; AES Hybrid Cryptosystem{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+</head>
+<body>
+    <header class="site-header">
+        <div class="container">
+            <h1><a href="{{ url_for('home') }}">RSA &amp; AES Hybrid Cryptosystem</a></h1>
+            <nav>
+                <a href="{{ url_for('home') }}">Home</a>
+                <a href="{{ url_for('keys_page') }}">RSA Keys</a>
+                <a href="{{ url_for('encrypt_page') }}">Encrypt</a>
+                <a href="{{ url_for('decrypt_page') }}">Decrypt</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <ul class="flashes">
+                    {% for category, msg in messages %}
+                        <li class="flash flash-{{ category }}">{{ msg }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="site-footer">
+        <div class="container">
+            <small>
+                University Cryptography Project &mdash; RSA &amp; AES implemented
+                manually from scratch. No external cryptography libraries used.
+            </small>
+        </div>
+    </footer>
+</body>
+</html>

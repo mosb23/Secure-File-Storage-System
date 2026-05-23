@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Decryption Result{% endblock %}
+
+{% block content %}
+<h2>Decryption Successful</h2>
+<p>
+    Recovered file: <strong>{{ original_name }}</strong>
+    ({{ plaintext_size }} bytes)
+</p>
+
+<a class="button big" href="{{ url_for('download', kind='decrypted', name=download_name) }}">
+    Download decrypted file
+</a>
+
+{% if preview_text is not none %}
+    <h3>Text preview</h3>
+    <pre>{{ preview_text }}</pre>
+{% else %}
+    <p class="note">
+        File contents are binary and cannot be previewed as text. Download
+        the file to inspect it.
+    </p>
+{% endif %}
+
+<p>
+    <a class="button" href="{{ url_for('decrypt_page') }}">Decrypt another file</a>
+    <a class="button secondary" href="{{ url_for('encrypt_page') }}">Encrypt a file</a>
+</p>
+{% endblock %}

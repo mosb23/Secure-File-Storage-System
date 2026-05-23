@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Decrypt a File{% endblock %}
+
+{% block content %}
+<h2>Decrypt a File</h2>
+<p>
+    Upload an <code>.enc.txt</code> bundle produced by this app. The system
+    will use the current RSA private key to recover the AES session key and
+    then AES-decrypt the file.
+</p>
+
+<form method="post" enctype="multipart/form-data" class="upload-form">
+    <input type="file" name="file" accept=".txt,.json,.enc,text/plain,application/json" required />
+    <button type="submit" class="button">Decrypt</button>
+</form>
+
+<p class="note">
+    The RSA keypair lives in memory only. If the server restarted since you
+    encrypted the file, decryption will fail. Use the
+    <a href="{{ url_for('keys_page') }}">Keys page</a> to inspect the current keypair.
+</p>
+{% endblock %}

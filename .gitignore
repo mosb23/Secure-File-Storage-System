@@ -5,3 +5,7 @@ __pycache__/
 uploads/*
 encrypted/*
 decrypted/*
+
+!uploads/.gitkeep
+!encrypted/.gitkeep
+!decrypted/.gitkeep

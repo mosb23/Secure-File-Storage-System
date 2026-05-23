@@ -61,20 +61,45 @@ All algorithms must be implemented manually.
 
 # Current Project Status
 
-## Completed
+**All 15 steps complete.** The project is fully functional end-to-end.
 
-### STEP 1 — Environment Setup & Project Initialization
+| Step | Description | Status |
+|---|---|---|
+| 1 | Environment Setup & Project Initialization | Done |
+| 2 | RSA Math Utilities (gcd, egcd, modinv, mod_exp) | Done |
+| 3 | Prime Generation (Miller-Rabin) | Done |
+| 4 | Modular Exponentiation (manual repeated squaring) | Done |
+| 5 | RSA Key Generation | Done |
+| 6 | RSA Encryption / Decryption | Done |
+| 7 | AES Finite Field Mathematics (GF(2^8)) | Done |
+| 8 | AES Transformations (SubBytes / ShiftRows / MixColumns / AddRoundKey) | Done |
+| 9 | AES Key Expansion | Done |
+| 10 | AES CBC Mode + PKCS#7 Padding | Done |
+| 11 | Hybrid Cryptosystem Integration | Done |
+| 12 | Flask UI (key page, encrypt page, decrypt page, downloads) | Done |
+| 13 | Full File Encryption Workflow | Done |
+| 14 | Tests and Validation (42 tests passing) | Done |
+| 15 | README and Documentation | Done |
 
-Completed tasks:
+## Verification
 
-- Python environment setup
-- Virtual environment creation
-- Flask installation
-- Professional project architecture
-- Folder structure initialization
-- Flask application initialization
-- Git initialization
-- requirements.txt generation
+* AES verified against the official **NIST FIPS 197** test vector:
+  `key=000102030405060708090a0b0c0d0e0f`,
+  `plaintext=00112233445566778899aabbccddeeff`
+  -> `ciphertext=69c4e0d86a7b0430d8cdb78070b4c55a`
+* AES verified against the FIPS 197 Appendix A example.
+* RSA round-trip verified for messages from 1 byte up to AES-key size,
+  with 512-bit, 1024-bit, and 2048-bit moduli.
+* Hybrid cryptosystem verified on empty files, text, and 4 KB random
+  binary blobs.
+* Modular exponentiation cross-checked against Python's `pow(a, b, m)`
+  inside tests only (not used in cryptographic code).
+
+Run the full test suite at any time:
+
+```powershell
+python -m unittest discover -s tests -v
+```
 
 ---
 
@@ -238,27 +263,31 @@ ui/
 
 ---
 
-# Current Flask Test
+# Running the Web Application
 
-The project currently contains a minimal Flask app to verify environment setup.
+Start the Flask server:
 
-Run:
-
-```bash
+```powershell
 python main.py
 ```
 
-Open:
+Then open in your browser:
 
 ```text
 http://127.0.0.1:5000
 ```
 
-Expected output:
+You will see a four-page application:
 
-```text
-RSA & AES Hybrid Cryptosystem Project
-```
+1. **Home** — workflow explanation and a snapshot of the current RSA keypair.
+2. **RSA Keys** — view the current key, optionally regenerate at 512 / 1024 / 2048 bits.
+3. **Encrypt** — upload any file (up to 16 MB), see the AES key / IV /
+   RSA-wrapped key / ciphertext, and download a `.enc.json` bundle.
+4. **Decrypt** — upload the `.enc.json` bundle to recover the original file.
+
+Note: the RSA keypair lives in memory only. Restarting the server gives a
+fresh keypair, so encrypted files cannot be decrypted across restarts —
+this is intentional for the educational demo.
 
 ---
 

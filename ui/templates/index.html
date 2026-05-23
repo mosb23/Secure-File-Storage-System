@@ -1,11 +1,49 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <title>Secure File Storage</title>
-  </head>
-  <body>
-    <h1>Secure File Storage System</h1>
-    <p>Welcome to the secure file storage UI.</p>
-  </body>
-</html>
+{% extends "base.html" %}
+
+{% block content %}
+<section class="hero">
+    <h2>Secure File Storage System</h2>
+    <p class="lead">
+        Upload a file, encrypt it with AES-128 using a random session key,
+        then protect that session key with RSA-1024. Only the RSA private
+        key holder can recover the original file.
+    </p>
+</section>
+
+<section class="workflow">
+    <h3>Hybrid Workflow</h3>
+    <ol class="workflow-steps">
+        <li><strong>Generate</strong> a random AES-128 session key + IV.</li>
+        <li><strong>Encrypt</strong> the file with AES in CBC mode.</li>
+        <li><strong>Wrap</strong> the AES key with the recipient's RSA public key.</li>
+        <li><strong>Store/send</strong> the bundle: encrypted key + IV + ciphertext.</li>
+        <li><strong>Recipient</strong> decrypts the AES key with their RSA private key.</li>
+        <li><strong>Recipient</strong> decrypts the file with the recovered AES key.</li>
+    </ol>
+</section>
+
+<section class="keypair-card">
+    <h3>Current RSA Keypair</h3>
+    {% if keypair_summary.generated_at %}
+        <p>
+            <strong>{{ keypair_summary.bits }}-bit</strong> keypair generated
+            at <code>{{ keypair_summary.generated_at }}</code>.
+        </p>
+        <p>
+            Public modulus n (truncated):
+            <code>{{ keypair_summary.n_short }}</code><br/>
+            Public exponent e: <code>{{ keypair_summary.e }}</code>
+        </p>
+        <p>
+            <a class="button" href="{{ url_for('keys_page') }}">View / regenerate keys</a>
+        </p>
+    {% else %}
+        <p>No keypair yet.</p>
+    {% endif %}
+</section>
+
+<section class="actions">
+    <a class="button big" href="{{ url_for('encrypt_page') }}">Encrypt a file</a>
+    <a class="button big secondary" href="{{ url_for('decrypt_page') }}">Decrypt a file</a>
+</section>
+{% endblock %}
