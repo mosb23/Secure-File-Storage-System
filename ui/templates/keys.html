@@ -5,6 +5,10 @@
 <h2>RSA Keypair</h2>
 
 <p>Bits: <strong>{{ bits }}</strong> &middot; Generated at <code>{{ generated_at }}</code></p>
+<p class="note">
+    The encrypted bundle records this public modulus so the app can detect
+    when a file was encrypted for a different in-memory keypair.
+</p>
 
 <form method="post" action="{{ url_for('keys_generate') }}" class="key-form">
     <label for="bits">Generate new keypair with size:</label>

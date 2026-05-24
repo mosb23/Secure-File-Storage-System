@@ -5,12 +5,19 @@
     <h2>Secure File Storage System</h2>
     <p class="lead">
         Upload a file, encrypt it with AES-128 using a random session key,
-        then protect that session key with RSA-1024. Only the RSA private
-        key holder can recover the original file.
+        then protect that session key with the current RSA public key. Only
+        the matching RSA private key can recover the original file.
     </p>
 </section>
 
 <section class="workflow">
+    <h3>Business Scenario</h3>
+    <p>
+        A user stores a private file in an encrypted bundle. The file receives
+        its own AES key, and that AES key is wrapped with the user's RSA public
+        key before storage.
+    </p>
+
     <h3>Hybrid Workflow</h3>
     <ol class="workflow-steps">
         <li><strong>Generate</strong> a random AES-128 session key + IV.</li>

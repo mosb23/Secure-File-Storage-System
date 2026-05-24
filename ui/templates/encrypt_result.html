@@ -21,6 +21,14 @@
 <h3>RSA-wrapped AES key (Base64)</h3>
 <pre>{{ encrypted_key_b64 }}</pre>
 
+<h3>Bundle metadata</h3>
+<pre>version: {{ bundle_version }}
+file encryption: {{ aes_algorithm }}
+padding: {{ aes_padding }}
+key wrap: {{ rsa_key_wrap }}
+encoding: {{ text_encoding }}
+rsa modulus bits: {{ rsa_bits }}</pre>
+
 <h3>Ciphertext preview (Base64, first 512 chars)</h3>
 <pre>{{ ciphertext_preview_b64 }}</pre>
 

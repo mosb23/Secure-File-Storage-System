@@ -22,6 +22,10 @@ class TestEncoding(unittest.TestCase):
         for data in [b"", b"a", b"AES key bytes", bytes(range(256))]:
             self.assertEqual(from_base64(to_base64(data)), data)
 
+    def test_invalid_base64_rejected(self):
+        with self.assertRaises(Exception):
+            from_base64("not valid base64!")
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

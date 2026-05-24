@@ -71,4 +71,4 @@ def to_base64(data):
 
 def from_base64(b64_string):
     """Base64 string -> bytes."""
-    return base64.b64decode(b64_string)
+    return base64.b64decode(b64_string, validate=True)

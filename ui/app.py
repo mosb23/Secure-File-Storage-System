@@ -34,6 +34,7 @@ from flask import (
     flash,
     abort,
 )
+from werkzeug.utils import secure_filename
 
 from rsa.rsa_core import generate_keypair
 from hybrid.hybrid_crypto import hybrid_encrypt, hybrid_decrypt
@@ -55,6 +56,13 @@ for d in (UPLOAD_DIR, ENCRYPTED_DIR, DECRYPTED_DIR):
 app = Flask(__name__)
 app.secret_key = "educational-demo-not-for-production"
 app.config["MAX_CONTENT_LENGTH"] = 16 * 1024 * 1024  # 16 MB upload limit
+
+BUNDLE_VERSION = 1
+BUSINESS_MODEL = "Secure File Storage System"
+AES_ALGORITHM = "AES-128-CBC"
+AES_PADDING = "PKCS#7"
+RSA_KEY_WRAP = "RSA length-prefixed educational key wrap"
+TEXT_ENCODING = "JSON fields with Base64 binary values"
 
 
 # ---------------------------------------------------------------------------
@@ -127,7 +135,7 @@ def encrypt_page():
         return redirect(url_for("encrypt_page"))
 
     upload = request.files["file"]
-    original_name = upload.filename
+    original_name = _safe_original_name(upload.filename)
     plaintext = upload.read()
 
     kp = get_or_create_keypair()
@@ -138,15 +146,10 @@ def encrypt_page():
     # by default. The contents are still JSON (a readable, self-describing
     # envelope around the Base64-encoded ciphertext).
     job_id = uuid.uuid4().hex[:12]
-    encrypted_filename = f"{job_id}__{original_name}.enc.txt"
-    encrypted_path = os.path.join(ENCRYPTED_DIR, encrypted_filename)
+    encrypted_filename = _generated_name(job_id, original_name, ".enc.txt")
+    encrypted_path = _resolve_output_path(ENCRYPTED_DIR, encrypted_filename)
+    on_disk = _bundle_to_json(original_name, bundle, kp)
 
-    on_disk = {
-        "original_name": original_name,
-        "encrypted_key_b64": to_base64(bundle["encrypted_key"]),
-        "iv_b64": to_base64(bundle["iv"]),
-        "ciphertext_b64": to_base64(bundle["ciphertext"]),
-    }
     with open(encrypted_path, "w", encoding="utf-8") as f:
         json.dump(on_disk, f, indent=2)
 
@@ -160,6 +163,12 @@ def encrypt_page():
         encrypted_key_b64=to_base64(bundle["encrypted_key"]),
         ciphertext_preview_b64=to_base64(bundle["ciphertext"])[:512],
         download_name=encrypted_filename,
+        bundle_version=BUNDLE_VERSION,
+        aes_algorithm=AES_ALGORITHM,
+        aes_padding=AES_PADDING,
+        rsa_key_wrap=RSA_KEY_WRAP,
+        text_encoding=TEXT_ENCODING,
+        rsa_bits=kp["bits"],
     )
 
 
@@ -169,32 +178,29 @@ def decrypt_page():
         return render_template("decrypt.html")
 
     if "file" not in request.files or request.files["file"].filename == "":
-        flash("Please choose an encrypted .enc.json file to decrypt.", "error")
+        flash("Please choose an encrypted .enc.txt file to decrypt.", "error")
         return redirect(url_for("decrypt_page"))
 
     upload = request.files["file"]
     try:
-        on_disk = json.loads(upload.read().decode("utf-8"))
-        bundle = {
-            "encrypted_key": from_base64(on_disk["encrypted_key_b64"]),
-            "iv": from_base64(on_disk["iv_b64"]),
-            "ciphertext": from_base64(on_disk["ciphertext_b64"]),
-        }
-        original_name = on_disk.get("original_name", "decrypted.bin")
+        on_disk = _read_bundle_json(upload)
+        bundle = _bundle_from_json(on_disk)
+        original_name = _safe_original_name(on_disk.get("original_name", "decrypted.bin"))
     except Exception as exc:
         flash(f"Invalid encrypted bundle: {exc}", "error")
         return redirect(url_for("decrypt_page"))
 
     kp = get_or_create_keypair()
     try:
+        _validate_bundle_key(on_disk, kp)
         plaintext = hybrid_decrypt(bundle, kp["private"])
     except Exception as exc:
         flash(f"Decryption failed: {exc}", "error")
         return redirect(url_for("decrypt_page"))
 
     job_id = uuid.uuid4().hex[:12]
-    decrypted_filename = f"{job_id}__{original_name}"
-    decrypted_path = os.path.join(DECRYPTED_DIR, decrypted_filename)
+    decrypted_filename = _generated_name(job_id, original_name)
+    decrypted_path = _resolve_output_path(DECRYPTED_DIR, decrypted_filename)
     with open(decrypted_path, "wb") as f:
         f.write(plaintext)
 
@@ -202,7 +208,7 @@ def decrypt_page():
     try:
         preview_text = plaintext.decode("utf-8")
         if len(preview_text) > 1000:
-            preview_text = preview_text[:1000] + " … (truncated)"
+            preview_text = preview_text[:1000] + " ... (truncated)"
     except UnicodeDecodeError:
         preview_text = None
 
@@ -223,7 +229,10 @@ def download(kind, name):
         folder = DECRYPTED_DIR
     else:
         abort(404)
-    full = os.path.join(folder, name)
+    try:
+        full = _resolve_output_path(folder, name)
+    except ValueError:
+        abort(404)
     if not os.path.isfile(full):
         abort(404)
     return send_file(full, as_attachment=True, download_name=_strip_job_id(name))
@@ -246,7 +255,87 @@ def _short_hex(value):
     h = hex(value)
     if len(h) <= 24:
         return h
-    return h[:14] + "…" + h[-8:]
+    return h[:14] + "..." + h[-8:]
+
+
+def _safe_original_name(name):
+    """Return a filesystem-safe display/storage name for an uploaded file."""
+    safe = secure_filename(str(name or "").strip())
+    return safe or "uploaded.bin"
+
+
+def _generated_name(job_id, original_name, suffix=""):
+    return f"{job_id}__{_safe_original_name(original_name)}{suffix}"
+
+
+def _resolve_output_path(folder, name):
+    """Resolve a generated filename and reject path traversal attempts."""
+    if os.path.basename(name) != name:
+        raise ValueError("Generated filename must not contain path separators.")
+
+    folder_abs = os.path.abspath(folder)
+    full = os.path.abspath(os.path.join(folder_abs, name))
+    if os.path.commonpath([folder_abs, full]) != folder_abs:
+        raise ValueError("Generated filename escapes the output directory.")
+    return full
+
+
+def _bundle_to_json(original_name, bundle, kp):
+    """Build the transferable JSON envelope around encrypted binary fields."""
+    return {
+        "version": BUNDLE_VERSION,
+        "business_model": BUSINESS_MODEL,
+        "algorithms": {
+            "file_encryption": AES_ALGORITHM,
+            "padding": AES_PADDING,
+            "key_wrap": RSA_KEY_WRAP,
+            "encoding": TEXT_ENCODING,
+        },
+        "rsa_public": {
+            "bits": kp["bits"],
+            "n_hex": hex(kp["public"]["n"]),
+            "e": kp["public"]["e"],
+        },
+        "original_name": original_name,
+        "encrypted_key_b64": to_base64(bundle["encrypted_key"]),
+        "iv_b64": to_base64(bundle["iv"]),
+        "ciphertext_b64": to_base64(bundle["ciphertext"]),
+    }
+
+
+def _read_bundle_json(upload):
+    raw = upload.read().decode("utf-8")
+    parsed = json.loads(raw)
+    if not isinstance(parsed, dict):
+        raise ValueError("Bundle must be a JSON object.")
+    return parsed
+
+
+def _bundle_from_json(on_disk):
+    required = ("encrypted_key_b64", "iv_b64", "ciphertext_b64")
+    missing = [field for field in required if field not in on_disk]
+    if missing:
+        raise ValueError("Missing bundle field(s): " + ", ".join(missing))
+
+    return {
+        "encrypted_key": from_base64(on_disk["encrypted_key_b64"]),
+        "iv": from_base64(on_disk["iv_b64"]),
+        "ciphertext": from_base64(on_disk["ciphertext_b64"]),
+    }
+
+
+def _validate_bundle_key(on_disk, kp):
+    """Reject bundles that advertise a different RSA public modulus."""
+    rsa_public = on_disk.get("rsa_public")
+    if not rsa_public:
+        return
+    if not isinstance(rsa_public, dict):
+        raise ValueError("Bundle RSA public metadata must be a JSON object.")
+
+    bundle_n = str(rsa_public.get("n_hex", "")).lower()
+    current_n = hex(kp["private"]["n"]).lower()
+    if bundle_n and bundle_n != current_n:
+        raise ValueError("Bundle was encrypted with a different RSA keypair.")
 
 
 def _strip_job_id(name):
