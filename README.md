@@ -312,7 +312,7 @@ control, and stronger operational security would be required.
 
 ## 👥 Authors
 
-University Arab Academy for Science, Technology & Maritime Transport
+University: Arab Academy for Science, Technology & Maritime Transport
 
 Course: Data Security
 
