@@ -21,14 +21,7 @@ We do NOT hard-code the S-box: we COMPUTE it the same way the AES
 specification defines it. This is the educationally honest approach.
 """
 
-
-# AES Rijndael irreducible polynomial.
 _AES_POLY = 0x11B
-
-
-# ---------------------------------------------------------------------------
-# GF(2^8) arithmetic
-# ---------------------------------------------------------------------------
 
 def gf_add(a, b):
     """
@@ -38,7 +31,6 @@ def gf_add(a, b):
     which is XOR for the bit representation.)
     """
     return a ^ b
-
 
 def gf_mul(a, b):
     """
@@ -54,11 +46,10 @@ def gf_mul(a, b):
         high_bit = a & 0x80
         a = (a << 1) & 0xFF
         if high_bit:
-            # Reduce by XOR-ing with the low 8 bits of 0x11B == 0x1B.
+
             a ^= 0x1B
         b >>= 1
     return result & 0xFF
-
 
 def gf_pow(a, n):
     """Exponentiation in GF(2^8) via square-and-multiply (uses gf_mul)."""
@@ -70,7 +61,6 @@ def gf_pow(a, n):
         base = gf_mul(base, base)
         n >>= 1
     return result
-
 
 def gf_inv(a):
     """
@@ -85,20 +75,6 @@ def gf_inv(a):
         return 0
     return gf_pow(a, 254)
 
-
-# ---------------------------------------------------------------------------
-# AES Affine transformation (used to build the S-box)
-# ---------------------------------------------------------------------------
-#
-# Given the multiplicative inverse b = a^(-1) in GF(2^8), AES defines:
-#
-#     b'_i = b_i XOR b_(i+4) XOR b_(i+5) XOR b_(i+6) XOR b_(i+7) XOR c_i
-#
-# where indices are taken mod 8 and c = 0x63 is a fixed constant.
-#
-# Equivalently in matrix form, multiply b by a fixed 8x8 binary matrix and
-# add the constant byte 0x63.
-
 def _affine_transform(b):
     result = 0
     for i in range(8):
@@ -112,7 +88,6 @@ def _affine_transform(b):
         )
         result |= (bit & 1) << i
     return result
-
 
 def _inv_affine_transform(b):
     """
@@ -133,17 +108,11 @@ def _inv_affine_transform(b):
         result |= (bit & 1) << i
     return result
 
-
-# ---------------------------------------------------------------------------
-# Build the S-box and its inverse
-# ---------------------------------------------------------------------------
-
 def _build_sbox():
     sbox = [0] * 256
     for a in range(256):
         sbox[a] = _affine_transform(gf_inv(a))
     return sbox
-
 
 def _build_inv_sbox(sbox):
     inv = [0] * 256
@@ -151,28 +120,15 @@ def _build_inv_sbox(sbox):
         inv[sbox[i]] = i
     return inv
 
-
 S_BOX = _build_sbox()
 INV_S_BOX = _build_inv_sbox(S_BOX)
 
-
-# ---------------------------------------------------------------------------
-# Round constants (RCON) for AES key expansion
-# ---------------------------------------------------------------------------
-#
-# For AES-128 we need RCON[1..10]. RCON[i] = (x^(i-1) mod m(x), 0, 0, 0)
-# in word form. Here we just store the leading byte; key_expansion.py
-# XORs it into the high byte of the rotated word.
-#
-# Concretely RCON[i] = 2^(i-1) in GF(2^8).
-
 def _build_rcon(num_rounds=10):
-    rcon = [0] * (num_rounds + 1)  # index 0 unused
+    rcon = [0] * (num_rounds + 1)
     val = 1
     for i in range(1, num_rounds + 1):
         rcon[i] = val
         val = gf_mul(val, 0x02)
     return rcon
-
 
 RCON = _build_rcon(10)

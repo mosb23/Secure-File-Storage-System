@@ -40,11 +40,6 @@ from rsa.rsa_core import generate_keypair
 from hybrid.hybrid_crypto import hybrid_encrypt, hybrid_decrypt
 from encoding.encoding_utils import to_hex, to_base64, from_base64
 
-
-# ---------------------------------------------------------------------------
-# Application setup
-# ---------------------------------------------------------------------------
-
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 UPLOAD_DIR = os.path.join(BASE_DIR, "uploads")
 ENCRYPTED_DIR = os.path.join(BASE_DIR, "encrypted")
@@ -55,7 +50,7 @@ for d in (UPLOAD_DIR, ENCRYPTED_DIR, DECRYPTED_DIR):
 
 app = Flask(__name__)
 app.secret_key = "educational-demo-not-for-production"
-app.config["MAX_CONTENT_LENGTH"] = 16 * 1024 * 1024  # 16 MB upload limit
+app.config["MAX_CONTENT_LENGTH"] = 16 * 1024 * 1024
 
 BUNDLE_VERSION = 1
 BUSINESS_MODEL = "Secure File Storage System"
@@ -64,16 +59,7 @@ AES_PADDING = "PKCS#7"
 RSA_KEY_WRAP = "RSA length-prefixed educational key wrap"
 TEXT_ENCODING = "JSON fields with Base64 binary values"
 
-
-# ---------------------------------------------------------------------------
-# In-memory RSA keypair
-# ---------------------------------------------------------------------------
-#
-# For this academic demo we keep one keypair in memory. In a real product
-# you would persist keys securely and authenticate users.
-
 _KEYPAIR = {"public": None, "private": None, "bits": None, "generated_at": None}
-
 
 def get_or_create_keypair(bits=1024):
     """Return the current keypair, generating one on first access."""
@@ -85,16 +71,10 @@ def get_or_create_keypair(bits=1024):
         _KEYPAIR["generated_at"] = datetime.now().isoformat(timespec="seconds")
     return _KEYPAIR
 
-
-# ---------------------------------------------------------------------------
-# Routes
-# ---------------------------------------------------------------------------
-
 @app.route("/")
 def home():
     kp = get_or_create_keypair()
     return render_template("index.html", keypair_summary=_keypair_summary(kp))
-
 
 @app.route("/keys")
 def keys_page():
@@ -110,7 +90,6 @@ def keys_page():
         prime_q_hex=hex(kp["private"]["q"]),
     )
 
-
 @app.route("/keys/generate", methods=["POST"])
 def keys_generate():
     bits = int(request.form.get("bits", "1024"))
@@ -123,7 +102,6 @@ def keys_generate():
     _KEYPAIR["generated_at"] = datetime.now().isoformat(timespec="seconds")
     flash(f"New RSA-{bits} keypair generated.", "success")
     return redirect(url_for("keys_page"))
-
 
 @app.route("/encrypt", methods=["GET", "POST"])
 def encrypt_page():
@@ -141,10 +119,6 @@ def encrypt_page():
     kp = get_or_create_keypair()
     bundle = hybrid_encrypt(plaintext, kp["public"])
 
-    # Save the bundle to disk so the user can download it.
-    # We use a .enc.txt extension so the file opens in Notepad on Windows
-    # by default. The contents are still JSON (a readable, self-describing
-    # envelope around the Base64-encoded ciphertext).
     job_id = uuid.uuid4().hex[:12]
     encrypted_filename = _generated_name(job_id, original_name, ".enc.txt")
     encrypted_path = _resolve_output_path(ENCRYPTED_DIR, encrypted_filename)
@@ -170,7 +144,6 @@ def encrypt_page():
         text_encoding=TEXT_ENCODING,
         rsa_bits=kp["bits"],
     )
-
 
 @app.route("/decrypt", methods=["GET", "POST"])
 def decrypt_page():
@@ -204,7 +177,6 @@ def decrypt_page():
     with open(decrypted_path, "wb") as f:
         f.write(plaintext)
 
-    # Try to show a small text preview if the data is UTF-8 decodable.
     try:
         preview_text = plaintext.decode("utf-8")
         if len(preview_text) > 1000:
@@ -219,7 +191,6 @@ def decrypt_page():
         download_name=decrypted_filename,
         preview_text=preview_text,
     )
-
 
 @app.route("/download/<kind>/<path:name>")
 def download(kind, name):
@@ -237,11 +208,6 @@ def download(kind, name):
         abort(404)
     return send_file(full, as_attachment=True, download_name=_strip_job_id(name))
 
-
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
-
 def _keypair_summary(kp):
     return {
         "bits": kp["bits"],
@@ -250,23 +216,19 @@ def _keypair_summary(kp):
         "e": kp["public"]["e"],
     }
 
-
 def _short_hex(value):
     h = hex(value)
     if len(h) <= 24:
         return h
     return h[:14] + "..." + h[-8:]
 
-
 def _safe_original_name(name):
     """Return a filesystem-safe display/storage name for an uploaded file."""
     safe = secure_filename(str(name or "").strip())
     return safe or "uploaded.bin"
 
-
 def _generated_name(job_id, original_name, suffix=""):
     return f"{job_id}__{_safe_original_name(original_name)}{suffix}"
-
 
 def _resolve_output_path(folder, name):
     """Resolve a generated filename and reject path traversal attempts."""
@@ -278,7 +240,6 @@ def _resolve_output_path(folder, name):
     if os.path.commonpath([folder_abs, full]) != folder_abs:
         raise ValueError("Generated filename escapes the output directory.")
     return full
-
 
 def _bundle_to_json(original_name, bundle, kp):
     """Build the transferable JSON envelope around encrypted binary fields."""
@@ -302,14 +263,12 @@ def _bundle_to_json(original_name, bundle, kp):
         "ciphertext_b64": to_base64(bundle["ciphertext"]),
     }
 
-
 def _read_bundle_json(upload):
     raw = upload.read().decode("utf-8")
     parsed = json.loads(raw)
     if not isinstance(parsed, dict):
         raise ValueError("Bundle must be a JSON object.")
     return parsed
-
 
 def _bundle_from_json(on_disk):
     required = ("encrypted_key_b64", "iv_b64", "ciphertext_b64")
@@ -322,7 +281,6 @@ def _bundle_from_json(on_disk):
         "iv": from_base64(on_disk["iv_b64"]),
         "ciphertext": from_base64(on_disk["ciphertext_b64"]),
     }
-
 
 def _validate_bundle_key(on_disk, kp):
     """Reject bundles that advertise a different RSA public modulus."""
@@ -337,13 +295,10 @@ def _validate_bundle_key(on_disk, kp):
     if bundle_n and bundle_n != current_n:
         raise ValueError("Bundle was encrypted with a different RSA keypair.")
 
-
 def _strip_job_id(name):
-    # Files are stored as "<jobid>__<originalname>". Strip prefix for download.
     if "__" in name:
         return name.split("__", 1)[1]
     return name
-
 
 if __name__ == "__main__":
     app.run(debug=True)

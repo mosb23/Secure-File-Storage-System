@@ -26,17 +26,11 @@ Where each encoding is used in this project
 
 import base64
 
-
-# ---------------------------------------------------------------------------
-# UTF-8 helpers
-# ---------------------------------------------------------------------------
-
 def utf8_encode(text):
     """Convert a Python str into UTF-8 bytes."""
     if not isinstance(text, str):
         raise TypeError("utf8_encode expects a str.")
     return text.encode("utf-8")
-
 
 def utf8_decode(data):
     """Decode UTF-8 bytes back into a Python str."""
@@ -44,30 +38,18 @@ def utf8_decode(data):
         raise TypeError("utf8_decode expects bytes.")
     return data.decode("utf-8")
 
-
-# ---------------------------------------------------------------------------
-# Hex helpers
-# ---------------------------------------------------------------------------
-
 def to_hex(data):
     """Bytes -> uppercase-friendly hex string (lowercase digits)."""
     return data.hex()
-
 
 def from_hex(hex_string):
     """Hex string -> bytes. Whitespace is ignored."""
     cleaned = "".join(hex_string.split())
     return bytes.fromhex(cleaned)
 
-
-# ---------------------------------------------------------------------------
-# Base64 helpers
-# ---------------------------------------------------------------------------
-
 def to_base64(data):
     """Bytes -> Base64 ASCII string."""
     return base64.b64encode(data).decode("ascii")
-
 
 def from_base64(b64_string):
     """Base64 string -> bytes."""

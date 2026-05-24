@@ -13,10 +13,9 @@ from aes.modes import (
     generate_iv,
 )
 
-
 class TestGF(unittest.TestCase):
     def test_gf_mul_known_values(self):
-        self.assertEqual(gf_mul(0x57, 0x83), 0xC1)  # AES spec example
+        self.assertEqual(gf_mul(0x57, 0x83), 0xC1)
         self.assertEqual(gf_mul(0x00, 0xFF), 0x00)
         self.assertEqual(gf_mul(0x01, 0xAB), 0xAB)
         self.assertEqual(gf_mul(0x02, 0x80), 0x1B)
@@ -25,7 +24,6 @@ class TestGF(unittest.TestCase):
         for a in range(1, 256):
             self.assertEqual(gf_mul(a, gf_inv(a)), 1)
         self.assertEqual(gf_inv(0), 0)
-
 
 class TestSBox(unittest.TestCase):
     def test_known_entries(self):
@@ -39,7 +37,6 @@ class TestSBox(unittest.TestCase):
     def test_inverse_sbox(self):
         for i in range(256):
             self.assertEqual(INV_S_BOX[S_BOX[i]], i)
-
 
 class TestAESBlock(unittest.TestCase):
     def test_nist_vector(self):
@@ -58,7 +55,6 @@ class TestAESBlock(unittest.TestCase):
         self.assertEqual(aes_encrypt_block(plaintext, key), expected)
         self.assertEqual(aes_decrypt_block(expected, key), plaintext)
 
-
 class TestPKCS7(unittest.TestCase):
     def test_padding_lengths(self):
         self.assertEqual(pkcs7_pad(b""),
@@ -74,8 +70,7 @@ class TestPKCS7(unittest.TestCase):
 
     def test_corrupted_padding_rejected(self):
         with self.assertRaises(ValueError):
-            pkcs7_unpad(b"A" * 16)  # last byte 'A' would mean 65 bytes padding
-
+            pkcs7_unpad(b"A" * 16)
 
 class TestAESCBC(unittest.TestCase):
     def test_roundtrip_various_sizes(self):
@@ -93,7 +88,6 @@ class TestAESCBC(unittest.TestCase):
         c1 = aes_cbc_encrypt(data, key, generate_iv())
         c2 = aes_cbc_encrypt(data, key, generate_iv())
         self.assertNotEqual(c1, c2)
-
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

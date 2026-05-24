@@ -16,7 +16,6 @@ import unittest
 
 from rsa.math_utils import gcd, egcd, modinv, mod_exp
 
-
 class TestGCD(unittest.TestCase):
     def test_known_values(self):
         self.assertEqual(gcd(54, 24), 6)
@@ -38,7 +37,6 @@ class TestGCD(unittest.TestCase):
         self.assertEqual(a % g, 0)
         self.assertEqual(b % g, 0)
 
-
 class TestEGCD(unittest.TestCase):
     def test_bezout_identity(self):
         """For every (a, b), egcd must return (g, x, y) with a*x + b*y == g."""
@@ -59,12 +57,11 @@ class TestEGCD(unittest.TestCase):
             self.assertEqual(a * x + b * y, g)
             self.assertEqual(g, gcd(a, b))
 
-
 class TestModInv(unittest.TestCase):
     def test_known_values(self):
-        self.assertEqual(modinv(3, 11), 4)        # 3*4 = 12 ≡ 1 (mod 11)
-        self.assertEqual(modinv(7, 26), 15)       # 7*15 = 105 ≡ 1 (mod 26)
-        self.assertEqual(modinv(17, 3120), 2753)  # classic RSA tutorial value
+        self.assertEqual(modinv(3, 11), 4)
+        self.assertEqual(modinv(7, 26), 15)
+        self.assertEqual(modinv(17, 3120), 2753)
 
     def test_inverse_property(self):
         """modinv(a, m) must satisfy (a * inv) mod m == 1 whenever it exists."""
@@ -79,8 +76,7 @@ class TestModInv(unittest.TestCase):
 
     def test_raises_when_not_coprime(self):
         with self.assertRaises(ValueError):
-            modinv(6, 9)  # gcd(6, 9) = 3, no inverse exists
-
+            modinv(6, 9)
 
 class TestModExp(unittest.TestCase):
     def test_small_known_values(self):
@@ -106,7 +102,7 @@ class TestModExp(unittest.TestCase):
         for _ in range(5):
             base = random.getrandbits(1024)
             exp = random.getrandbits(1024)
-            mod = random.getrandbits(1024) | 1  # make sure mod is odd and > 0
+            mod = random.getrandbits(1024) | 1
             self.assertEqual(mod_exp(base, exp, mod), pow(base, exp, mod))
 
     def test_rsa_round_trip(self):
@@ -130,7 +126,6 @@ class TestModExp(unittest.TestCase):
             recovered = mod_exp(c, d, n)
             self.assertEqual(recovered, m,
                              f"RSA round-trip failed for m={m}")
-
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

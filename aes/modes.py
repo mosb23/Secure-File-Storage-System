@@ -35,16 +35,10 @@ import secrets
 
 from aes.aes_core import aes_encrypt_block, aes_decrypt_block, BLOCK_SIZE
 
-
-# ---------------------------------------------------------------------------
-# PKCS#7 padding
-# ---------------------------------------------------------------------------
-
 def pkcs7_pad(data, block_size=BLOCK_SIZE):
     """Append PKCS#7 padding so len(data) becomes a multiple of block_size."""
     pad_len = block_size - (len(data) % block_size)
     return data + bytes([pad_len]) * pad_len
-
 
 def pkcs7_unpad(data, block_size=BLOCK_SIZE):
     """Remove PKCS#7 padding. Raises ValueError on malformed padding."""
@@ -57,28 +51,16 @@ def pkcs7_unpad(data, block_size=BLOCK_SIZE):
         raise ValueError("Corrupted PKCS#7 padding.")
     return data[:-pad_len]
 
-
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
-
 def _xor_bytes(a, b):
     return bytes(x ^ y for x, y in zip(a, b))
-
 
 def generate_iv():
     """Return a fresh random 16-byte IV using the OS CSPRNG."""
     return secrets.token_bytes(BLOCK_SIZE)
 
-
 def generate_aes_key():
     """Return a fresh random 16-byte AES-128 session key."""
     return secrets.token_bytes(BLOCK_SIZE)
-
-
-# ---------------------------------------------------------------------------
-# CBC mode encryption / decryption
-# ---------------------------------------------------------------------------
 
 def aes_cbc_encrypt(plaintext, key, iv):
     """
@@ -109,7 +91,6 @@ def aes_cbc_encrypt(plaintext, key, iv):
         previous = encrypted
 
     return ciphertext
-
 
 def aes_cbc_decrypt(ciphertext, key, iv):
     """

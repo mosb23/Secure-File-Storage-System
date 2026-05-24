@@ -8,7 +8,6 @@ from encoding.encoding_utils import (
     to_base64, from_base64,
 )
 
-
 class TestEncoding(unittest.TestCase):
     def test_utf8_roundtrip(self):
         for s in ["hello", "Café crème", "日本語", "🔐 secure"]:
@@ -25,7 +24,6 @@ class TestEncoding(unittest.TestCase):
     def test_invalid_base64_rejected(self):
         with self.assertRaises(Exception):
             from_base64("not valid base64!")
-
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

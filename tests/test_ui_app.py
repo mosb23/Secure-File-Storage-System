@@ -9,7 +9,6 @@ import unittest
 import ui.app as ui_app
 from rsa.rsa_core import generate_keypair
 
-
 class TestFlaskWorkflow(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
@@ -168,7 +167,6 @@ class TestFlaskWorkflow(unittest.TestCase):
     def _read_encrypted_bundle_bytes(self, name):
         with open(os.path.join(ui_app.ENCRYPTED_DIR, name), "rb") as f:
             return f.read()
-
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

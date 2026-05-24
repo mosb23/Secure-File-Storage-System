@@ -32,25 +32,6 @@ All functions in this file work on arbitrary-size Python integers, which
 is exactly what RSA needs (numbers with hundreds of digits).
 """
 
-
-# ---------------------------------------------------------------------------
-# 1) Euclidean Algorithm  -  gcd(a, b)
-# ---------------------------------------------------------------------------
-#
-# Mathematical idea:
-#   gcd(a, b) = gcd(b, a mod b)
-#   gcd(a, 0) = a
-#
-# Proof sketch:
-#   If d divides both a and b, then d also divides (a - q*b) = a mod b.
-#   So the set of common divisors of (a, b) equals the set of common
-#   divisors of (b, a mod b). Hence their greatest elements are equal.
-#
-# Termination:
-#   Each step the second argument strictly decreases and stays >= 0,
-#   so the algorithm always terminates.
-#
-# Complexity: O(log(min(a, b))) -- extremely fast, even for 2048-bit ints.
 def gcd(a, b):
     """
     Return the greatest common divisor of a and b using Euclid's algorithm.
@@ -64,28 +45,6 @@ def gcd(a, b):
         a, b = b, a % b
     return a
 
-
-# ---------------------------------------------------------------------------
-# 2) Extended Euclidean Algorithm  -  egcd(a, b)
-# ---------------------------------------------------------------------------
-#
-# In addition to gcd(a, b) = g, this algorithm also finds two integers
-# x and y (called Bezout coefficients) such that:
-#
-#       a*x + b*y = g
-#
-# These coefficients are exactly what we need to compute modular inverses,
-# which RSA uses to derive the private key d from the public key e.
-#
-# We use the ITERATIVE version because:
-#   * RSA numbers are huge (1024+ bits).
-#   * Python's default recursion limit (1000) is not enough for the
-#     recursive version on adversarial inputs.
-#   * Iterative form is also slightly faster.
-#
-# Invariant maintained during the loop:
-#       old_r = a*old_s + b*old_t
-#           r = a*s     + b*t
 def egcd(a, b):
     """
     Extended Euclidean algorithm.
@@ -109,29 +68,6 @@ def egcd(a, b):
 
     return (old_r, old_s, old_t)
 
-
-# ---------------------------------------------------------------------------
-# 3) Modular Multiplicative Inverse  -  modinv(a, m)
-# ---------------------------------------------------------------------------
-#
-# Definition:
-#   The modular inverse of a modulo m is the integer x in [0, m-1]
-#   such that:
-#         (a * x) mod m = 1
-#
-# Existence:
-#   x exists if and only if gcd(a, m) == 1.
-#
-# Why it exists (RSA proof):
-#   By the Extended Euclidean Algorithm, we get x, y with
-#       a*x + m*y = gcd(a, m) = 1
-#   Taking this equation modulo m:
-#       a*x ≡ 1 (mod m)
-#   So x is the modular inverse of a.
-#
-# Where RSA uses it:
-#   d = e^(-1) mod phi(n)
-#   This is the entire reason the private key d exists.
 def modinv(a, m):
     """
     Return the modular multiplicative inverse of a modulo m.
@@ -153,48 +89,6 @@ def modinv(a, m):
 
     return x % m
 
-
-# ---------------------------------------------------------------------------
-# 4) Modular Exponentiation  -  mod_exp(base, exp, mod)
-# ---------------------------------------------------------------------------
-#
-# Goal:
-#   Compute (base ** exp) mod mod efficiently, WITHOUT actually computing
-#   the astronomically large number base**exp.
-#
-# Algorithm: Binary / Right-to-Left Repeated Squaring
-# ---------------------------------------------------
-#   Write exp in binary, e.g. exp = b_k b_{k-1} ... b_1 b_0.
-#   Then:
-#       base**exp = product over i of (base ** (2**i))   for each i where b_i = 1
-#
-#   We iterate through the bits of exp from least significant to most
-#   significant:
-#       * If the current bit is 1, multiply the running result by the
-#         current "base power" (base ** (2**i)).
-#       * Square the base each step to advance to the next power of two.
-#       * Take the result modulo `mod` at every multiplication so numbers
-#         never grow beyond ~ (2 * log2(mod)) bits.
-#
-# Worked example: 7^13 mod 19
-#   13 in binary = 1101
-#
-#   step | bit | base (mod 19)  | result (mod 19)
-#   -----+-----+----------------+----------------
-#   start|     | 7              | 1
-#   i=0  |  1  | 7^2 = 49 = 11  | 1 * 7  = 7
-#   i=1  |  0  | 11^2 = 121 = 7 | 7              (unchanged, bit was 0)
-#   i=2  |  1  | 7^2 = 49 = 11  | 7 * 7  = 49 = 11
-#   i=3  |  1  | 11^2 = 121 = 7 | 11 * 11 = 121 = 7
-#
-#   Final: 7 (and indeed 7^13 mod 19 = 7)
-#
-# Complexity:
-#   O(log(exp)) modular multiplications.
-#   For 1024-bit RSA this is ~1024 multiplications -- entirely tractable.
-#
-# Note:
-#   This function intentionally does NOT call pow(base, exp, mod).
 def mod_exp(base, exp, mod):
     """
     Compute (base ** exp) mod mod using repeated squaring.
@@ -208,8 +102,7 @@ def mod_exp(base, exp, mod):
     if mod <= 0:
         raise ValueError("Modulus must be positive.")
     if exp < 0:
-        # Negative exponent means: inverse of base, then raise to |exp|.
-        # We handle this for correctness; RSA itself never needs it.
+
         base = modinv(base, mod)
         exp = -exp
     if mod == 1:

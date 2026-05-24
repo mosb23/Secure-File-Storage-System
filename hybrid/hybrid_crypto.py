@@ -38,7 +38,6 @@ from aes.modes import (
 )
 from rsa.rsa_core import rsa_encrypt_bytes, rsa_decrypt_bytes
 
-
 def hybrid_encrypt(plaintext, public_key):
     """
     Encrypt arbitrary bytes using the hybrid RSA+AES scheme.
@@ -67,12 +66,11 @@ def hybrid_encrypt(plaintext, public_key):
     encrypted_key = rsa_encrypt_bytes(aes_key, public_key)
 
     return {
-        "aes_key": aes_key,            # exposed for UI display only
+        "aes_key": aes_key,
         "encrypted_key": encrypted_key,
         "iv": iv,
         "ciphertext": ciphertext,
     }
-
 
 def hybrid_decrypt(bundle, private_key):
     """

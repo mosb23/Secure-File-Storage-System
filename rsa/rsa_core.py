@@ -45,9 +45,7 @@ Notes for this educational project
 from rsa.math_utils import gcd, modinv, mod_exp
 from rsa.prime import generate_distinct_primes
 
-
 DEFAULT_PUBLIC_EXPONENT = 65537
-
 
 def generate_keypair(bits=1024, e=DEFAULT_PUBLIC_EXPONENT):
     """
@@ -67,8 +65,6 @@ def generate_keypair(bits=1024, e=DEFAULT_PUBLIC_EXPONENT):
 
     half = bits // 2
 
-    # Generate p, q until gcd(e, phi(n)) == 1 (almost always true on
-    # the first try when e = 65537, but we loop for full correctness).
     while True:
         p, q = generate_distinct_primes(half)
         n = p * q
@@ -83,11 +79,6 @@ def generate_keypair(bits=1024, e=DEFAULT_PUBLIC_EXPONENT):
 
     return public_key, private_key
 
-
-# ---------------------------------------------------------------------------
-# Raw integer-level RSA primitives
-# ---------------------------------------------------------------------------
-
 def rsa_encrypt_int(m, public_key):
     """
     Encrypt the integer m using public_key.
@@ -98,7 +89,6 @@ def rsa_encrypt_int(m, public_key):
     if not (0 <= m < n):
         raise ValueError("Message integer must satisfy 0 <= m < n.")
     return mod_exp(m, e, n)
-
 
 def rsa_decrypt_int(c, private_key):
     """
@@ -111,30 +101,11 @@ def rsa_decrypt_int(c, private_key):
         raise ValueError("Ciphertext integer must satisfy 0 <= c < n.")
     return mod_exp(c, d, n)
 
-
-# ---------------------------------------------------------------------------
-# Bytes-friendly wrappers (used by the hybrid layer)
-# ---------------------------------------------------------------------------
-#
-# We need to convert a small byte string (an AES key) into an integer
-# small enough to RSA-encrypt, and back.
-#
-# We use a minimal length-prefix scheme:
-#     plaintext bytes  ->  b"\x00" || length(1 byte) || data
-#     concatenated bytes are interpreted as a big-endian integer
-#
-# The leading 0x00 keeps the high byte from being interpreted as part of
-# the length and ensures the integer stays under n. This is a SIMPLIFIED
-# encoding suitable for the AES key (max 32 bytes). For arbitrary-length
-# messages, a proper padding scheme (OAEP) would be required.
-
 def _bytes_to_int(data):
     return int.from_bytes(data, byteorder="big")
 
-
 def _int_to_bytes(value, length):
     return value.to_bytes(length, byteorder="big")
-
 
 def rsa_encrypt_bytes(data, public_key):
     """
@@ -149,7 +120,6 @@ def rsa_encrypt_bytes(data, public_key):
             "Data too long for this RSA modulus; use a larger key size."
         )
 
-    # Simple framing: 0x00 || length || data, then pad with leading zeros.
     framed = b"\x00" + bytes([len(data)]) + data
     pad_len = n_byte_len - len(framed)
     framed = b"\x00" * pad_len + framed
@@ -157,7 +127,6 @@ def rsa_encrypt_bytes(data, public_key):
     m = _bytes_to_int(framed)
     c = rsa_encrypt_int(m, public_key)
     return _int_to_bytes(c, n_byte_len)
-
 
 def rsa_decrypt_bytes(cipher, private_key):
     """
@@ -174,12 +143,10 @@ def rsa_decrypt_bytes(cipher, private_key):
     m = rsa_decrypt_int(c, private_key)
     framed = _int_to_bytes(m, n_byte_len)
 
-    # Strip leading zero padding bytes.
     i = 0
     while i < len(framed) and framed[i] == 0:
         i += 1
-    # Expect the structure: (zeros) || length || data
-    # After stripping zeros, the first remaining byte is the length.
+
     if i >= len(framed):
         raise ValueError("Malformed RSA plaintext: all zeros.")
     length = framed[i]

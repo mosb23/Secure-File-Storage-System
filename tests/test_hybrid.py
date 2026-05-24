@@ -6,11 +6,9 @@ import unittest
 from rsa.rsa_core import generate_keypair
 from hybrid.hybrid_crypto import hybrid_encrypt, hybrid_decrypt
 
-
 class TestHybrid(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        # Use a 512-bit key once to keep all tests fast.
         cls.public_key, cls.private_key = generate_keypair(512)
 
     def test_text_roundtrip(self):
@@ -39,13 +37,12 @@ class TestHybrid(unittest.TestCase):
         message = b"deterministic input"
         b1 = hybrid_encrypt(message, self.public_key)
         b2 = hybrid_encrypt(message, self.public_key)
-        # Different random AES keys / IVs -> different ciphertexts.
+
         self.assertNotEqual(b1["ciphertext"], b2["ciphertext"])
         self.assertNotEqual(b1["encrypted_key"], b2["encrypted_key"])
-        # But both decrypt back to the same plaintext.
+
         self.assertEqual(hybrid_decrypt(b1, self.private_key), message)
         self.assertEqual(hybrid_decrypt(b2, self.private_key), message)
-
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

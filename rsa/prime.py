@@ -31,9 +31,6 @@ import secrets
 
 from rsa.math_utils import mod_exp
 
-
-# A few small primes used to quickly reject obvious composites
-# before invoking the more expensive Miller-Rabin test.
 _SMALL_PRIMES = [
       2,   3,   5,   7,  11,  13,  17,  19,  23,  29,
      31,  37,  41,  43,  47,  53,  59,  61,  67,  71,
@@ -42,7 +39,6 @@ _SMALL_PRIMES = [
     179, 181, 191, 193, 197, 199, 211, 223, 227, 229,
     233, 239, 241, 251,
 ]
-
 
 def _miller_rabin_round(n, a):
     """
@@ -61,29 +57,24 @@ def _miller_rabin_round(n, a):
         True   if the test passes (n could still be prime).
         False  if n is definitely composite.
     """
-    # Decompose n - 1 = d * 2^s with d odd.
+
     d = n - 1
     s = 0
     while d % 2 == 0:
         d //= 2
         s += 1
 
-    # Compute a^d mod n using our manual modular exponentiation.
     x = mod_exp(a, d, n)
 
-    # Case (1): a^d ≡ 1 (mod n) -- looks prime, pass the test.
     if x == 1 or x == n - 1:
         return True
 
-    # Otherwise, square up to s-1 times looking for x ≡ -1 (mod n).
     for _ in range(s - 1):
         x = (x * x) % n
         if x == n - 1:
             return True
 
-    # No witness condition met -> definitely composite.
     return False
-
 
 def is_probable_prime(n, rounds=40):
     """
@@ -96,25 +87,22 @@ def is_probable_prime(n, rounds=40):
     For rounds = 40 the error probability is below 2^-80, far stricter
     than what RSA needs for production use.
     """
-    # Reject trivial cases.
+
     if n < 2:
         return False
 
-    # Quick check against a precomputed list of small primes.
     for p in _SMALL_PRIMES:
         if n == p:
             return True
         if n % p == 0:
             return False
 
-    # Run `rounds` independent rounds with random witnesses in [2, n-2].
     for _ in range(rounds):
-        a = secrets.randbelow(n - 3) + 2  # pick a in [2, n-2]
+        a = secrets.randbelow(n - 3) + 2
         if not _miller_rabin_round(n, a):
             return False
 
     return True
-
 
 def generate_prime(bits):
     """
@@ -133,26 +121,20 @@ def generate_prime(bits):
         raise ValueError("Use at least 8 bits.")
 
     while True:
-        # Random bits-bit candidate.
+
         candidate = secrets.randbits(bits)
 
-        # Force the top TWO bits to 1. This guarantees that the product of
-        # two such primes occupies exactly 2*bits bits (i.e. an n-bit RSA
-        # modulus really has n bits, not n-1).
         candidate |= (1 << (bits - 1))
         if bits >= 2:
             candidate |= (1 << (bits - 2))
 
-        # Force the least significant bit to 1 -> odd.
         candidate |= 1
 
-        # Try a small batch of consecutive odd candidates before giving up.
         for _ in range(bits * 2):
             if _passes_small_prime_filter(candidate):
                 if is_probable_prime(candidate):
                     return candidate
             candidate += 2
-
 
 def _passes_small_prime_filter(n):
     """Quick rejection: divisible by any small prime (except itself)?"""
@@ -162,7 +144,6 @@ def _passes_small_prime_filter(n):
         if n % p == 0:
             return False
     return True
-
 
 def generate_distinct_primes(bits):
     """
