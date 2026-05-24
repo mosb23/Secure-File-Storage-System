@@ -1,24 +1,24 @@
-# Secure File Storage System
+# 🔐 Secure File Storage System
 
-## Project Overview
+## 📌 Project Overview
 
 This project is a Python and Flask secure file storage demo that implements a
 hybrid cryptosystem from scratch.
 
 The system uses:
 
-- RSA to generate public/private keys and encrypt the AES session key.
-- AES-128-CBC to encrypt the uploaded file data.
-- Base64, Hex, UTF-8, and JSON to make encrypted binary data displayable and
+- 🔑 RSA to generate public/private keys and encrypt the AES session key.
+- 🧊 AES-128-CBC to encrypt the uploaded file data.
+- 🔁 Base64, Hex, UTF-8, and JSON to make encrypted binary data displayable and
   transferable.
-- A simple web UI to demonstrate key generation, file encryption, encrypted
+- 🖥️ A simple web UI to demonstrate key generation, file encryption, encrypted
   bundle download, bundle decryption, and recovered file download.
 
 No external cryptography libraries are used. The AES, RSA, prime generation,
 key schedule, and modular exponentiation logic are implemented manually for the
 course requirement.
 
-## Business Scenario
+## 🏢 Business Scenario
 
 The selected business model is a Secure File Storage System.
 
@@ -34,7 +34,7 @@ The selected business model is a Secure File Storage System.
 This demonstrates realistic hybrid encryption: AES protects the actual file
 contents, while RSA protects the AES key.
 
-## Requirements Compliance
+## ✅ Requirements Compliance
 
 | Requirement | Implementation |
 | --- | --- |
@@ -55,7 +55,7 @@ contents, while RSA protects the AES key.
 | Encoding scheme | `encoding/encoding_utils.py` supports UTF-8, Hex, and Base64. |
 | UI demonstration | `ui/app.py` and `ui/templates/` provide the web workflow. |
 
-## Project Structure
+## 📁 Project Structure
 
 ```text
 secure-file-storage-system/
@@ -85,7 +85,7 @@ secure-file-storage-system/
 `-- decrypted/
 ```
 
-## AES Implementation
+## 🧩 AES Implementation
 
 The AES implementation is located in the `aes/` package.
 
@@ -121,7 +121,7 @@ Pi = AES_Decrypt(Ci) XOR C(i-1)
 
 Each uploaded file receives a fresh random AES key and a fresh random IV.
 
-## RSA Implementation
+## 🔏 RSA Implementation
 
 The RSA implementation is located in the `rsa/` package.
 
@@ -171,7 +171,7 @@ m = c^d mod n
 The implementation does not call Python's built-in `pow(a, b, m)` in the
 application code.
 
-## Hybrid Cryptosystem Workflow
+## 🔄 Hybrid Cryptosystem Workflow
 
 The hybrid implementation is located in `hybrid/hybrid_crypto.py`.
 
@@ -195,7 +195,7 @@ Decryption:
 5. Save and download the recovered original file.
 ```
 
-## Encoding Scheme
+## 🧾 Encoding Scheme
 
 Encrypted data is binary, so it cannot always be displayed directly in a web
 page or safely stored inside a text file. This project uses three encodings:
@@ -230,7 +230,7 @@ The encrypted bundle is a JSON text file with Base64 fields:
 }
 ```
 
-## Web UI
+## 🌐 Web UI
 
 The Flask UI demonstrates the full business workflow.
 
@@ -243,7 +243,7 @@ The Flask UI demonstrates the full business workflow.
 | Decrypt | `/decrypt` | Uploads an encrypted bundle. |
 | Decryption Result | `/decrypt` after POST | Shows recovered file information and download link. |
 
-## How to Run
+## 🚀 How to Run
 
 Create and activate a virtual environment:
 
@@ -270,7 +270,7 @@ Open the browser at:
 http://127.0.0.1:5000
 ```
 
-## How to Test
+## 🧪 How to Test
 
 Run:
 
@@ -289,7 +289,7 @@ The tests cover AES vectors, CBC round trips, PKCS#7 padding, RSA math,
 Miller-Rabin prime generation, RSA encryption/decryption, hybrid encryption,
 encoding helpers, and Flask route behavior.
 
-## Demo Steps
+## 🎬 Demo Steps
 
 1. Start the Flask app with `python main.py`.
 2. Open `/keys` and generate or view the RSA keypair.
@@ -299,7 +299,7 @@ encoding helpers, and Flask route behavior.
 6. Open `/decrypt` and upload the `.enc.txt` bundle.
 7. Download the recovered original file.
 
-## Educational Scope
+## 🎓 Educational Scope
 
 This is a university cryptography project built to demonstrate AES, RSA, and a
 hybrid cryptosystem clearly. The UI displays internal values such as the AES
@@ -310,7 +310,7 @@ For a production system, additional protections such as authenticated
 encryption, RSA-OAEP, persistent key storage, user authentication, access
 control, and stronger operational security would be required.
 
-## Authors
+## 👥 Authors
 
 University Cryptography Project Team
 
