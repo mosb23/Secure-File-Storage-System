@@ -312,8 +312,8 @@ control, and stronger operational security would be required.
 
 ## 👥 Authors
 
-University Cryptography Project Team
+University Arab Academy for Science, Technology & Maritime Transport
 
-Course: Data Security / Cryptography
+Course: Data Security
 
 Project: RSA and AES Hybrid Cryptosystem - Secure File Storage System
